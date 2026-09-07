@@ -3,11 +3,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { Logger } from "pino";
 import { z } from "zod";
-import type {
-  ProviderUsage,
-  ProviderUsageBalance,
-  ProviderUsageWindow,
-} from "../../../server/messages.js";
+import { CodexRateLimitSchema, normalizeCodexWindows } from "./codex-windows.js";
+import type { ProviderUsage, ProviderUsageBalance } from "../../../server/messages.js";
 import type { ProviderApiFetch, ProviderUsageFetcher } from "../provider.js";
 import {
   ApiNumberSchema,
@@ -36,12 +33,7 @@ const CodexWindowSchema = z.object({
 const CodexUsageResponseSchema = z.object({
   plan_type: z.string().optional(),
   email: z.string().optional(),
-  rate_limit: z
-    .object({
-      primary_window: CodexWindowSchema.nullish(),
-      secondary_window: CodexWindowSchema.nullish(),
-    })
-    .nullish(),
+  rate_limit: CodexRateLimitSchema.nullish(),
   code_review_rate_limit: z
     .object({
       primary_window: CodexWindowSchema.nullish(),
@@ -107,33 +99,8 @@ export class CodexQuotaProvider implements ProviderUsageFetcher {
   }
 
   private toUsage(resp: CodexUsageResponse): ProviderUsage {
-    const session = codexWindow(resp.rate_limit?.primary_window);
-    const weekly = codexWindow(resp.rate_limit?.secondary_window);
+    const { windows, quotaWindowsComplete } = normalizeCodexWindows(resp.rate_limit);
     const codeReview = codexWindow(resp.code_review_rate_limit?.primary_window);
-    const windows: ProviderUsageWindow[] = [];
-
-    if (session) {
-      windows.push(
-        windowFromUsedPct({
-          id: "session",
-          label: "Session",
-          utilizationPct: session.usedPct,
-          resetsAt: session.resetsAt,
-          tone: toneFromUsedPct(session.usedPct),
-        }),
-      );
-    }
-    if (weekly) {
-      windows.push(
-        windowFromUsedPct({
-          id: "weekly",
-          label: "Weekly",
-          utilizationPct: weekly.usedPct,
-          resetsAt: weekly.resetsAt,
-          tone: toneFromUsedPct(weekly.usedPct),
-        }),
-      );
-    }
     if (codeReview) {
       windows.push(
         windowFromUsedPct({
@@ -163,6 +130,7 @@ export class CodexQuotaProvider implements ProviderUsageFetcher {
       status: "available",
       planLabel: resp.plan_type ?? null,
       windows,
+      quotaWindowsComplete,
       balances,
       details: [],
       error: null,

@@ -138,6 +138,16 @@ Boundary tests should assert observable behavior: cold reads may call provider a
 
 Provider plan usage is fetch-on-demand, not a daemon push subscription. The app calls `provider.usage.list.request` through React Query when the usage tooltip or Host Usage settings screen is shown, and the daemon returns the normalized `ProviderUsage` list directly.
 
+Admission controllers should require `server_info.features.providerUsageFreshWindows`
+and request `forceRefresh: true` to bypass the five-minute display cache. The
+response timestamp still must meet their freshness policy. No model inference is
+started by this read. Codex window identity comes from `limit_window_seconds`, not
+primary/secondary position: a Pro account can have a weekly primary window and an
+explicitly null secondary window. `quotaWindowsComplete` certifies that both slots
+were supplied and every non-null subscription window has a valid duration and
+utilization. An omitted slot, missing duration/utilization, duplicate duration or
+empty set is not complete. Clients must not interpret it as unlimited quota.
+
 To add plan usage for a provider, add `packages/server/src/services/quota-fetcher/providers/<provider>.ts` and register it in `packages/server/src/services/quota-fetcher/manifest.ts`. The provider file exports only its fetcher class; provider auth, endpoint constants, API schemas, and normalization helpers stay private in that file. A fetcher owns provider auth/API parsing and returns the generic shape:
 
 - `providerId`, `displayName`, `status`, and optional `planLabel`

@@ -132,8 +132,8 @@ function makeCodexResponse(overrides: object = {}) {
     plan_type: "plus",
     email: "user@example.com",
     rate_limit: {
-      primary_window: { used_percent: 42, reset_at: 1_748_812_800 },
-      secondary_window: { used_percent: 8, reset_at: 1_749_072_000 },
+      primary_window: { used_percent: 42, reset_at: 1_748_812_800, limit_window_seconds: 18000 },
+      secondary_window: { used_percent: 8, reset_at: 1_749_072_000, limit_window_seconds: 604800 },
     },
     ...overrides,
   };
@@ -1371,8 +1371,16 @@ describe("usage bars escalate as they fill", () => {
               jsonResponse(
                 makeCodexResponse({
                   rate_limit: {
-                    primary_window: { used_percent: 12, reset_at: 1_748_812_800 },
-                    secondary_window: { used_percent: 96, reset_at: 1_749_072_000 },
+                    primary_window: {
+                      used_percent: 12,
+                      reset_at: 1_748_812_800,
+                      limit_window_seconds: 18000,
+                    },
+                    secondary_window: {
+                      used_percent: 96,
+                      reset_at: 1_749_072_000,
+                      limit_window_seconds: 604800,
+                    },
                   },
                 }),
               ),

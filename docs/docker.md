@@ -203,7 +203,14 @@ docker build \
   .
 ```
 
-The Docker workflow builds the image on pull requests and on `main` as a
+In this private fork, GitLab is the writable primary and `.gitlab-ci.yml` gates
+quota changes. GitHub is a recovery mirror; its workflows are manual-only so
+mirrored commits cannot launch duplicate builds or upstream deployment jobs.
+The estate image is built by Forge's existing GHCR pipeline from the pinned
+upstream archive plus a checksum-verified patch from the reviewed source commit.
+No CI publishing credentials are added to this fork.
+
+Upstream's Docker workflow builds the image on pull requests and on `main` as a
 non-publishing check. Stable `vX.Y.Z` tag pushes publish
 `ghcr.io/getpaseo/paseo:X.Y.Z` and `ghcr.io/getpaseo/paseo:latest`. Beta tags
 publish only the exact prerelease tag, such as

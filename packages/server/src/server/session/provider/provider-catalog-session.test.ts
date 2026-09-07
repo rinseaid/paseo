@@ -80,6 +80,26 @@ function makeSubsystem(options: MakeOptions = {}) {
 }
 
 describe("ProviderCatalogSession", () => {
+  it("forwards forceRefresh to the usage service", async () => {
+    const calls: unknown[] = [];
+    const { subsystem, emitted } = makeSubsystem({
+      usage: {
+        listUsage: async (options: unknown) => {
+          calls.push(options);
+          return { fetchedAt: "2026-09-07T00:00:00.000Z", providers: [] };
+        },
+      },
+    });
+    await subsystem.handleProviderUsageListRequest({
+      type: "provider.usage.list.request",
+      requestId: "fresh",
+      forceRefresh: true,
+    });
+    expect(calls).toEqual([{ forceRefresh: true }]);
+    expect(findByType(emitted, "provider.usage.list.response")?.payload.fetchedAt).toBe(
+      "2026-09-07T00:00:00.000Z",
+    );
+  });
   it("PUSH gates invisible providers and downgrades unknown mode icons for legacy clients", () => {
     const { subsystem, emitted, pushSnapshotChange } = makeSubsystem({
       visibleProviders: new Set(["codex"]),
