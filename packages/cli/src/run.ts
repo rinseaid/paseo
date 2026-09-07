@@ -1,6 +1,7 @@
 import { createCli } from "./cli.js";
 import { classifyInvocation } from "./classify.js";
 import { openDesktopWithProject } from "./commands/open.js";
+import type { Command } from "commander";
 
 export interface RunCliOptions {
   cwd?: string;
@@ -13,7 +14,7 @@ export function createCliParseArgv(input: {
   nodeArgv?: [string, string];
 }): string[] | { kind: "open-project"; resolvedPath: string } {
   const program = createCli();
-  const knownCommands = new Set(program.commands.map((command) => command.name()));
+  const knownCommands = new Set(program.commands.map((command: Command) => command.name()));
   const invocation = classifyInvocation({
     argv: input.argv,
     knownCommands,
