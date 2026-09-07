@@ -134,6 +134,15 @@ describe("workspace descriptor message compatibility", () => {
 });
 
 describe("provider usage list message contract", () => {
+  test("preserves forceRefresh on the wire", () => {
+    expect(
+      SessionInboundMessageSchema.parse({
+        type: "provider.usage.list.request",
+        requestId: "fresh",
+        forceRefresh: true,
+      }),
+    ).toEqual({ type: "provider.usage.list.request", requestId: "fresh", forceRefresh: true });
+  });
   test("accepts the usage list request as a namespaced correlated RPC", () => {
     const parsed = SessionInboundMessageSchema.parse({
       type: "provider.usage.list.request",

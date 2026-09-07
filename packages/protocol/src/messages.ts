@@ -1308,6 +1308,7 @@ export const ProviderDiagnosticRequestMessageSchema = z.object({
 export const ProviderUsageListRequestMessageSchema = z.object({
   type: z.literal("provider.usage.list.request"),
   requestId: z.string(),
+  forceRefresh: z.boolean().optional(),
 });
 
 export const ResumeAgentRequestMessageSchema = z.object({
@@ -2790,6 +2791,8 @@ export const ServerInfoStatusPayloadSchema = z
         workspaceFileEditing: z.boolean().optional(),
         // COMPAT(providerUsageList): added in v0.1.98, drop the gate when daemon floor >= v0.1.98.
         providerUsageList: z.boolean().optional(),
+        // COMPAT(providerUsageFreshWindows): added in v0.2.3 fork, remove gate after 2027-03-07.
+        providerUsageFreshWindows: z.boolean().optional(),
         // COMPAT(agentDetach): added in v0.1.98, remove gate after 2026-12-19 once daemon floor >= v0.1.98.
         agentDetach: z.boolean().optional(),
         // COMPAT(agentThinkingUpdate): added in v0.2.4, remove gate after 2027-01-28.
@@ -4851,6 +4854,7 @@ export const ProviderUsageStatusSchema = z.enum(["available", "unavailable", "er
 export const ProviderUsageWindowSchema = z.object({
   id: z.string(),
   label: z.string(),
+  durationSeconds: z.number().int().positive().optional(),
   usedPct: z.number().nullable().optional(),
   remainingPct: z.number().nullable().optional(),
   resetsAt: z.string().nullable().optional(),
@@ -4886,6 +4890,8 @@ export const ProviderUsageSchema = z.object({
   fetchedAt: z.string().nullable().optional(),
   nextRefreshAt: z.string().nullable().optional(),
   windows: z.array(ProviderUsageWindowSchema),
+  // True only when the provider explicitly accounts for every subscription window.
+  quotaWindowsComplete: z.boolean().optional(),
   balances: z.array(ProviderUsageBalanceSchema).optional(),
   details: z.array(ProviderUsageDetailSchema).optional(),
   error: z.string().nullable().optional(),
